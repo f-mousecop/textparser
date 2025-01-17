@@ -1,7 +1,13 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QLineEdit, QPushButton, QVBoxLayout, QMainWindow, QHBoxLayout, QGridLayout, QFormLayout, QDialog, QMessageBox, QInputDialog, QFileDialog, QMenu, QPlainTextEdit, QGraphicsDropShadowEffect
+from PyQt6.QtWidgets import (
+    QApplication, QLabel, QWidget, QLineEdit, 
+    QPushButton, QVBoxLayout, QMainWindow, QHBoxLayout,
+     QGridLayout, QFormLayout, QDialog, QMessageBox, 
+     QInputDialog, QFileDialog, QMenu, QPlainTextEdit,
+     QGraphicsDropShadowEffect, QToolBar, QStatusBar, QCheckBox
+)
 from PyQt6.QtCore import QObject, pyqtSignal, Qt
-from PyQt6.QtGui import QIcon, QColor
+from PyQt6.QtGui import QIcon, QColor, QAction
 from PyQt6 import QtGui, QtCore, QtWidgets
 
 
@@ -15,8 +21,33 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Text File Reader")
         self.setWindowIcon(QIcon('favicon.ico'))
         self.resize(350, 250)
+        self.setWindowFlags(Qt.WindowType.Window)
         
+
+        button_action = QAction("Button", self)
+        button_action.setStatusTip("This is the button")
+        button_action.triggered.connect(self.onMyToolBarButtonClick)
+        button_action.setCheckable(True)
+
+        button_action2 = QAction("&Button 2", self)
+        button_action2.setStatusTip("Button 2")
+        button_action2.triggered.connect(self.onMyToolBarButtonClick)
+        button_action2.setCheckable(True)
         
+        close_button = QAction("&X", self)
+        close_button.setStatusTip("Close")
+        close_button.triggered.connect(self.onCloseButtonClick)
+
+        self.setStatusBar(QStatusBar(self))
+
+        menu = self.menuBar()
+        file_menu = menu.addMenu("&File")
+        file_menu.addAction(button_action)
+        file_menu.addSeparator()
+        file_menu.addAction(button_action2)
+        close = menu.addAction(close_button)
+
+
         # Create QLabel
         label = QLabel("Enter file name:")
         self.fileInput = QLineEdit(self)
@@ -32,32 +63,44 @@ class MainWindow(QMainWindow):
         closeButton = QPushButton("Close")
         closeButton.clicked.connect(self.onCloseButtonClick)
 
-        self.output = QPlainTextEdit(self)
-        self.output.setStyleSheet("background-color: #eee")
-        self.output.setHidden(True)
+        # self.output = QPlainTextEdit(self)
+        # self.output.setStyleSheet("background-color: #eee")
+        # self.output.setHidden(True)
 
 
         # Create vertical layout
         layout = QFormLayout()
-        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setContentsMargins(20, 60, 20, 20)
         layout.setSpacing(10)
         layout.addRow(label, self.fileInput)
+        
         
         hLayout = QHBoxLayout()
         hLayout.addWidget(submitButton)
         hLayout.addWidget(clearButton)
         hLayout.addWidget(closeButton)
         layout.addRow(hLayout)
-        layout.addRow(self.output)
+        # layout.addRow(self.output)
        
-
         # Create central widget and set layout
         central_widget = QWidget()
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
         
-        # self.setMinimumSize(400, 200)
+        central_widget.setStyleSheet('''
+                QWidget {
+                    background-color: #a0a4b8;
+                    font-size: 15px; 
+                }
+                QPushButton {
+                    background-color: #d8ddef
+                }
+        ''')
         
+        # self.setMinimumSize(400, 200)
+    
+    def onMyToolBarButtonClick(self, s):
+        print("click", s)
 
     def onButtonClick(self):
         print("Clicked")
@@ -124,8 +167,8 @@ class MainWindow(QMainWindow):
 
     def onClearButtonClick(self):
         self.fileInput.clear()
-        self.output.clear()
-        self.output.setHidden(True)
+        """ self.output.clear()
+        self.output.setHidden(True) """
 
     def onCloseButtonClick(self):
         QApplication.exit()
@@ -223,8 +266,15 @@ class DataWindow(MainWindow):
             central_widget.setLayout(layout)
             self.setCentralWidget(central_widget)
             central_widget.setStyleSheet('''
+                    QWidget {
+                        background-color: #a0a4b8;
+                        font-size: 15px;     
+                    }
                     QLineEdit {
                         background-color: #eee
+                    }
+                    QPushButton {
+                        background-color: #d8ddef
                     }
 
             ''')
@@ -245,16 +295,22 @@ class DataWindow(MainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyleSheet('''
-        QWidget {
-                background-color: #a0a4b8;
-                font-size: 15px;             
-        }
         
         QPushButton {
                 font-size: 13px;
-                background-color: #d8ddef
-                
+                background-color: #d8ddef  
         }
+        
+        QToolBar, QStatusBar {
+                background-color: #A0A4B8
+        }
+        
+        QMenuBar {
+                      background-color: #d8ddef;
+                      }
+        window {
+                      background-color: #d8ddef;
+                      }
 ''')
 
     window = MainWindow()
