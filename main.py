@@ -1,4 +1,6 @@
 import sys
+import re
+
 from PyQt6.QtWidgets import (
     QApplication, QLabel, QWidget, QLineEdit, 
     QPushButton, QVBoxLayout, QMainWindow, QHBoxLayout,
@@ -24,7 +26,7 @@ class MainWindow(QMainWindow):
         self.setWindowFlags(Qt.WindowType.Window)
         
 
-        button_action = QAction("Button", self)
+        """ button_action = QAction("Button", self)
         button_action.setStatusTip("This is the button")
         button_action.triggered.connect(self.onMyToolBarButtonClick)
         button_action.setCheckable(True)
@@ -45,7 +47,8 @@ class MainWindow(QMainWindow):
         file_menu.addAction(button_action)
         file_menu.addSeparator()
         file_menu.addAction(button_action2)
-        close = menu.addAction(close_button)
+        close = menu.addAction(close_button) """
+        
 
 
         # Create QLabel
@@ -56,6 +59,9 @@ class MainWindow(QMainWindow):
         # Create push button
         submitButton = QPushButton("Submit", self)
         submitButton.clicked.connect(self.onButtonClick)
+
+        openFileButton = QPushButton("Open File", self)
+        openFileButton.clicked.connect(self.onOpenFileClicked)
 
         clearButton = QPushButton("Clear", self)
         clearButton.clicked.connect(self.onClearButtonClick)
@@ -77,6 +83,7 @@ class MainWindow(QMainWindow):
         
         hLayout = QHBoxLayout()
         hLayout.addWidget(submitButton)
+        hLayout.addWidget(openFileButton)
         hLayout.addWidget(clearButton)
         hLayout.addWidget(closeButton)
         layout.addRow(hLayout)
@@ -102,73 +109,36 @@ class MainWindow(QMainWindow):
     def onMyToolBarButtonClick(self, s):
         print("click", s)
 
+    def onOpenFileClicked(self):
+        self.user_input = self.fileInput.text().strip('"')
+        file_handler = FileHandler(self.user_input)
+
+        if file_handler.read_file():
+            self.file_window = FileWindow(file_handler)
+            self.file_window.show()
+        else:
+            return
+
+
+
     def onButtonClick(self):
         print("Clicked")
-        self.user_txt = self.fileInput.text()
+        self.user_txt = self.fileInput.text().strip('"')
         data_handler = DataHandler(self.user_txt)
+        # self.validateFileName()
 
         if data_handler.read_file():
             self.data_window = DataWindow(data_handler)
             self.data_window.show()
         else:
             return
-            
-              
-            
-
-
-        """ try:
-            with open(user_txt, 'r') as file:
-                content = file.read()
-
-            numbers = [int(num) for num in content.split()]
-
-            if not numbers:
-                raise ValueError("No valid numbers found.")
-            
-            numbers_str = ", ".join(map(str, numbers))
-            numbers_add = " + ".join(map(str, numbers))
-
-            result = sum(numbers)
-            msg_box = QtWidgets.QMessageBox(self)
-            msg_box.setContentsMargins(10, 10, 10, 10)
-            msg_box.setText(f"Total: {result}")
-            msg_box.setDetailedText(f"Numbers found in '{user_txt}':\n{numbers_str}\n\
-                                    \nSum: {result}")
-            msg_box.setWindowTitle("Calculation Results")
-            msg_box.setStyleSheet("background-color: #eee; font-size: 14px")
-            layout = msg_box.layout()
-            widget = QtWidgets.QWidget()
-            widget.setFixedSize(300, 1)
-            layout.addWidget(widget, 1, 1, 1, 1)
-            # msg_box.exec()
-            
-            self.output.setHidden(False)
-            self.output.setReadOnly(True)
-            self.output.setPlainText(f"Total: {str(result)}\n\
-                                    \nNumbers found in '{user_txt}':\n{numbers_str}\n\
-                                    \n{numbers_add}\n\
-                                    \nSum: {result}")
-        
-        except FileNotFoundError:
-            msg_box = QMessageBox(self)
-            msg_box.setIcon(QMessageBox.Icon.Warning)
-            msg_box.setText(f"File '{user_txt}' not found.")
-            msg_box.setWindowTitle("Error")
-            msg_box.exec()
-        
-        except ValueError as ve:
-            msg_box = QMessageBox(self)
-            msg_box.setIcon(QMessageBox.Icon.Warning)
-            msg_box.setText(str(ve))
-            msg_box.setWindowTitle("Error")
-            msg_box.exec() """
-
+    
+    def validateFileName(self):
+        if not re.match(r'^[a-zA-Z0-9_\-]+\.txt$', self.user_txt):
+            raise ValueError("Invalid file name")
 
     def onClearButtonClick(self):
         self.fileInput.clear()
-        """ self.output.clear()
-        self.output.setHidden(True) """
 
     def onCloseButtonClick(self):
         QApplication.exit()
@@ -190,7 +160,10 @@ class DataHandler:
             with open(self.file_name, 'r') as file:
                 content = file.read()
 
-            self.numbers = [int(num) for num in content.split()]
+            self.numbers = [
+                            int(num) for num in content.split()
+                            if num.replace('.', '', 1).isdigit()
+                            ]
 
             if not self.numbers:
                 raise ValueError("No valid numbers found.")
@@ -208,6 +181,13 @@ class DataHandler:
             msg_box = QMessageBox()
             msg_box.setIcon(QMessageBox.Icon.Warning)
             msg_box.setText(str(ve))
+            msg_box.setWindowTitle("Error")
+            msg_box.exec()
+        
+        except Exception as oe:
+            msg_box = QMessageBox()
+            msg_box.setIcon(QMessageBox.Icon.Warning)
+            msg_box.setText(str(oe))
             msg_box.setWindowTitle("Error")
             msg_box.exec()
         
@@ -290,7 +270,90 @@ class DataWindow(MainWindow):
             self.setCentralWidget(central_widget)
 
 
+class FileHandler:
+    def __init__(self, file_name):
+        self.file_name = file_name
+    
+    def read_file(self):
+        try:
+            with open(self.file_name, 'r') as file:
+                content = file.read()
+
+            return content
         
+        except FileNotFoundError:
+            msg_box = QMessageBox()
+            msg_box.setIcon(QMessageBox.Icon.Warning)
+            msg_box.setText(f"File '{self.file_name}' not found.")
+            msg_box.setWindowTitle("Error")
+            msg_box.exec()
+
+        except Exception as oe:
+            msg_box = QMessageBox()
+            msg_box.setIcon(QMessageBox.Icon.Warning)
+            msg_box.setText(str(oe))
+            msg_box.setWindowTitle("Error")
+            msg_box.exec()
+            
+        return False
+
+    
+class FileWindow(MainWindow):
+    def __init__(self, file_handler):
+        super().__init__()
+        self.file_handler = file_handler
+        self.initDataUI()
+    
+    def initDataUI(self):
+        self.setWindowTitle("Content")
+        self.resize(600, 300)
+        self.setMinimumSize(400,300)
+
+        try:
+            output = self.file_handler.read_file()
+
+            layout = QVBoxLayout()
+            test_area = QPlainTextEdit(self)
+            test_area.setPlainText(output)
+            test_area.setReadOnly(True)
+
+            close_button = QPushButton("Close Window")
+            close_button.clicked.connect(self.close)
+            close_button.setFixedWidth(200)
+
+            box_layout = QVBoxLayout()
+
+            layout.addWidget(test_area, Qt.AlignmentFlag.AlignHCenter)
+            layout.addLayout(box_layout)
+            layout.setSpacing(10)
+            box_layout.addWidget(close_button, 4, Qt.AlignmentFlag.AlignCenter)
+
+            central_widget = QWidget()
+            central_widget.setLayout(layout)
+            self.setCentralWidget(central_widget)
+
+            central_widget.setStyleSheet('''
+                        QWidget {
+                            background-color: #a0a4b8;
+                            font-size: 15px;     
+                        }
+                        QPlainTextEdit {
+                            background-color: #eee
+                        }
+                        QPushButton {
+                            background-color: #d8ddef
+                        }
+
+                ''')
+        except Exception as e:
+            layout = QFormLayout()
+            error_label = QLabel(F"Error: {str(e)}")
+            layout.addWidget(error_label)
+
+            central_widget = QWidget()
+            central_widget.setLayout(layout)
+            self.setCentralWidget(central_widget)   
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
