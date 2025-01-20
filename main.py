@@ -4,15 +4,13 @@ import re
 from PyQt6.QtWidgets import (
     QApplication, QLabel, QWidget, QLineEdit, 
     QPushButton, QVBoxLayout, QMainWindow, QHBoxLayout,
-     QGridLayout, QFormLayout, QDialog, QMessageBox, 
-     QInputDialog, QFileDialog, QMenu, QPlainTextEdit,
-     QGraphicsDropShadowEffect, QToolBar, QStatusBar, QCheckBox
+     QFormLayout, QMessageBox, 
+     QInputDialog, QPlainTextEdit,
 )
-from PyQt6.QtCore import QObject, pyqtSignal, Qt
-from PyQt6.QtGui import QIcon, QColor, QAction
-from PyQt6 import QtGui, QtCore, QtWidgets
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
 
-
+# Class that operates as the main window of the GUI
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -24,31 +22,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon('favicon.ico'))
         self.resize(350, 250)
         self.setWindowFlags(Qt.WindowType.Window)
-        
-
-        """ button_action = QAction("Button", self)
-        button_action.setStatusTip("This is the button")
-        button_action.triggered.connect(self.onMyToolBarButtonClick)
-        button_action.setCheckable(True)
-
-        button_action2 = QAction("&Button 2", self)
-        button_action2.setStatusTip("Button 2")
-        button_action2.triggered.connect(self.onMyToolBarButtonClick)
-        button_action2.setCheckable(True)
-        
-        close_button = QAction("&X", self)
-        close_button.setStatusTip("Close")
-        close_button.triggered.connect(self.onCloseButtonClick)
-
-        self.setStatusBar(QStatusBar(self))
-
-        menu = self.menuBar()
-        file_menu = menu.addMenu("&File")
-        file_menu.addAction(button_action)
-        file_menu.addSeparator()
-        file_menu.addAction(button_action2)
-        close = menu.addAction(close_button) """
-        
+         
 
 
         # Create QLabel
@@ -69,10 +43,6 @@ class MainWindow(QMainWindow):
         closeButton = QPushButton("Close")
         closeButton.clicked.connect(self.onCloseButtonClick)
 
-        # self.output = QPlainTextEdit(self)
-        # self.output.setStyleSheet("background-color: #eee")
-        # self.output.setHidden(True)
-
 
         # Create vertical layout
         layout = QFormLayout()
@@ -81,13 +51,13 @@ class MainWindow(QMainWindow):
         layout.addRow(label, self.fileInput)
         
         
+        # Horizontal layout for buttons
         hLayout = QHBoxLayout()
         hLayout.addWidget(submitButton)
         hLayout.addWidget(openFileButton)
         hLayout.addWidget(clearButton)
         hLayout.addWidget(closeButton)
         layout.addRow(hLayout)
-        # layout.addRow(self.output)
        
         # Create central widget and set layout
         central_widget = QWidget()
@@ -104,15 +74,12 @@ class MainWindow(QMainWindow):
                 }
         ''')
         
-        # self.setMinimumSize(400, 200)
-    
-    def onMyToolBarButtonClick(self, s):
-        print("click", s)
-
+    # Retrieve user input from QLineEdit field
     def onOpenFileClicked(self):
         self.user_input = self.fileInput.text().strip('"')
         file_handler = FileHandler(self.user_input)
 
+        # If a file can be read, returns true and opens the file window
         if file_handler.read_file():
             self.file_window = FileWindow(file_handler)
             self.file_window.show()
@@ -121,21 +88,19 @@ class MainWindow(QMainWindow):
 
 
 
+    # Retrieve user input from QLineEdit field
     def onButtonClick(self):
         print("Clicked")
         self.user_txt = self.fileInput.text().strip('"')
         data_handler = DataHandler(self.user_txt)
-        # self.validateFileName()
 
+        # If the file can be read with valid numbers, open the data window, displaying results
         if data_handler.read_file():
             self.data_window = DataWindow(data_handler)
             self.data_window.show()
         else:
             return
     
-    def validateFileName(self):
-        if not re.match(r'^[a-zA-Z0-9_\-]+\.txt$', self.user_txt):
-            raise ValueError("Invalid file name")
 
     def onClearButtonClick(self):
         self.fileInput.clear()
@@ -144,22 +109,20 @@ class MainWindow(QMainWindow):
         QApplication.exit()
 
 
-    def get_input(self):
-        text, ok = QInputDialog.getText(self, "Input Dialog", "Enter name: ")
-        if ok:
-            print("Your name is: ", text)
-
-
+# Class for handling user input and retrieving valid numbers from a txt file
+# The file name is passed into the class
 class DataHandler:
     def __init__(self, file_name):
         self.file_name = file_name
         self.numbers = []
-        
+
+    # Attempt to open and read the file    
     def read_file(self):
         try:
             with open(self.file_name, 'r') as file:
                 content = file.read()
 
+            # Store valid numbers in numbers list, ignore whitespace and non digits
             self.numbers = [
                             int(num) for num in content.split()
                             if num.replace('.', '', 1).isdigit()
@@ -170,6 +133,7 @@ class DataHandler:
 
             return self.file_name
 
+        # Message box for file not found error 
         except FileNotFoundError:
             msg_box = QMessageBox()
             msg_box.setIcon(QMessageBox.Icon.Warning)
@@ -177,6 +141,7 @@ class DataHandler:
             msg_box.setWindowTitle("Error")
             msg_box.exec()
 
+        # Message box for ValueError
         except ValueError as ve:
             msg_box = QMessageBox()
             msg_box.setIcon(QMessageBox.Icon.Warning)
@@ -184,6 +149,7 @@ class DataHandler:
             msg_box.setWindowTitle("Error")
             msg_box.exec()
         
+        # Message box for other errors
         except Exception as oe:
             msg_box = QMessageBox()
             msg_box.setIcon(QMessageBox.Icon.Warning)
@@ -191,15 +157,17 @@ class DataHandler:
             msg_box.setWindowTitle("Error")
             msg_box.exec()
         
+        # If not successful, return false and don't open data window
         return False
 
     def calc_sum(self):
         return sum(self.numbers)
 
+    # Display output appropriately
     def get_strings(self):
         return ", ".join(map(str, self.numbers)), " + ".join(map(str,self.numbers))
 
-
+# Window that displays results
 class DataWindow(MainWindow):
     def __init__(self, data_handler):
         super().__init__()
@@ -215,6 +183,7 @@ class DataWindow(MainWindow):
             result = str(self.data_handler.calc_sum())
             numbers_str, numbers_add = self.data_handler.get_strings()
 
+            # Form layout for displaying the total, the numbers found in {file_name}, and the sum
             layout = QFormLayout()
             label1 = QLabel("Total")
             label2 = QLabel(f"Numbers found in '{name}'")
@@ -226,6 +195,7 @@ class DataWindow(MainWindow):
             text3 = QLineEdit(numbers_add)
             text4 = QLineEdit(result)
 
+            # Set LineEdits to read only
             text1.setReadOnly(True), text2.setReadOnly(True)
             text3.setReadOnly(True), text4.setReadOnly(True)
 
@@ -241,7 +211,7 @@ class DataWindow(MainWindow):
             close_button.setFixedWidth(200)
             layout.setSpacing(10)
             
-            
+            # Set layout
             central_widget = QWidget()
             central_widget.setLayout(layout)
             self.setCentralWidget(central_widget)
