@@ -189,7 +189,7 @@ class DataWindow(MainWindow):
             label2 = QLabel(f"Numbers found in '{name}'")
             label3= QLabel("Addition")
             label4 = QLabel("Sum")
-            
+    
             text1 = QLineEdit(result)
             text2 = QLineEdit(numbers_str)
             text3 = QLineEdit(numbers_add)
@@ -210,6 +210,7 @@ class DataWindow(MainWindow):
             box_layout.addWidget(close_button, 4, Qt.AlignmentFlag.AlignCenter)
             close_button.setFixedWidth(200)
             layout.setSpacing(10)
+            
             
             # Set layout
             central_widget = QWidget()
